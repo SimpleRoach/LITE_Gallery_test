@@ -1,10 +1,44 @@
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, WebSocket, WebSocketDisconnect
 from sqlalchemy.orm import Session
 from . import crud, models, schemas, database, s3_client
+from typing import List
 
 app = FastAPI()
 
 models.Base.metadata.create_all(bind=database.engine)
+
+
+class ConnectionManager:
+    def __init__(self):
+        self.active_connections: List[WebSocket] = []
+
+    async def connect(self, websocket: WebSocket):
+        await websocket.accept()
+        self.active_connections.append(websocket)
+
+    def disconnect(self, websocket: WebSocket):
+        self.active_connections.remove(websocket)
+
+    async def send_message(self, message: str, websocket: WebSocket):
+        await websocket.send_text(message)
+
+    async def broadcast(self, message: str):
+        for connection in self.active_connections:
+            await connection.send_text(message)
+
+
+manager = ConnectionManager()
+
+
+@app.websocket("/ws/{project_id}")
+async def websocket_endpoint(websocket: WebSocket, project_id: int):
+    await manager.connect(websocket)
+    try:
+        while True:
+            data = await websocket.receive_text()
+            await manager.send_message(f"Message text was: {data}", websocket)
+    except WebSocketDisconnect:
+        manager.disconnect(websocket)
 
 
 @app.post("/images/", response_model=schemas.Image)
@@ -14,7 +48,7 @@ async def create_image(image: schemas.ImageCreate, db: Session = Depends(databas
         raise HTTPException(status_code=404, detail="Project not found")
 
     db_image = crud.create_image(db=db, image=image)
-    upload_link = s3_client.create_presigned_url(bucket_name="your-bucket-name", object_name=image.filename)
+    upload_link = await s3_client.create_presigned_url(bucket_name="test_1", object_name=image.filename)
 
     return {"image_id": db_image.id, "upload_link": upload_link}
 

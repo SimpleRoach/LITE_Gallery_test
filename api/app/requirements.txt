@@ -1,8 +1,13 @@
 fastapi
+
 uvicorn
-fastapi
 uvicorn
 sqlalchemy
 psycopg2-binary
 pydantic
+
 aiobotocore
+
+pytest
+httpx
+pytest-asyncio
