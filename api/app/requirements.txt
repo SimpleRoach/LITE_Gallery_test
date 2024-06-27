@@ -1,2 +1,8 @@
 fastapi
 uvicorn
+fastapi
+uvicorn
+sqlalchemy
+psycopg2-binary
+pydantic
+boto3
