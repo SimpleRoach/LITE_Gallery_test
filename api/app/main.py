@@ -1,7 +1,9 @@
-from fastapi import FastAPI, Depends, HTTPException, WebSocket, WebSocketDisconnect
-from sqlalchemy.orm import Session
-from . import crud, models, schemas, database, s3_client
-from typing import List
+from fastapi import FastAPI
+import crud
+import models
+import schemas
+import database
+import s3_client
 
 app = FastAPI()
 

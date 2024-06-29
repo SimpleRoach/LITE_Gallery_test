@@ -1,5 +1,4 @@
-from sqlalchemy.orm import Session
-from . import models, schemas
+from app import models, schemas
 
 
 def get_project(db: Session, project_id: int):

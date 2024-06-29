@@ -1,29 +1,27 @@
 version: '3.8'
 
 services:
-  api:
-    build:
-      context: ./api
-    ports:
-      - "8000:8000"
-    depends_on:
-      - db
-      - s3
-
   db:
-    image: postgres:latest
+    image: postgres:13
     environment:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
       POSTGRES_DB: database
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
     ports:
       - "5433:5433"
 
-  s3:
-    image:
-    command: server /data
+  api:
+    build:
+      context: ./api
+    container_name: api
     environment:
-      MINIO_ACCESS_KEY:
-      MINIO_SECRET_KEY:
+      DATABASE_URL: postgresql://user:password@db/database
+    depends_on:
+      - db
     ports:
-      - "9000:9000"
+      - "8000:8000"
+
+volumes:
+  postgres_data:
